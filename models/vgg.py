@@ -59,6 +59,7 @@ class VGG_ATT(nn.Module):
             self.u3 = nn.Conv2d(512, 1, 1)
 
         self.conv_out = nn.Sequential(*list(self.features)[42:50])
+
         self.fc1 = nn.Linear(512, 512)
 
         self.fc1_l1 = nn.Linear(512, 256)
@@ -67,12 +68,17 @@ class VGG_ATT(nn.Module):
 
         self.fc2 = nn.Linear(256 + 512 + 512, 10)
 
-    def forward(self, x):
+    def forward(self, train_data):
+        for x in train_data:
+            print(x.size())
+            l1 = self.l1(x)
+        exit(1)
         l1 = self.l1(x)
         l2 = self.l2(l1)
         l3 = self.l3(l2)
 
         conv_out = self.conv_out(l3)
+
         fc1 = self.fc1(conv_out.view(conv_out.size(0), -1))
         fc1_l1 = self.fc1_l1(fc1)
         fc1_l2 = self.fc1_l2(fc1)
@@ -82,11 +88,13 @@ class VGG_ATT(nn.Module):
         att2 = self._compatibility_fn(l2, fc1_l2, level=2)
         att3 = self._compatibility_fn(l3, fc1_l3, level=3)
 
+
         g1 = self._weighted_combine(l1, att1)
         g2 = self._weighted_combine(l2, att2)
         g3 = self._weighted_combine(l3, att3)
 
         g = torch.cat((g1, g2, g3), dim=1)
+
         out = self.fc2(g)
 
         return out
@@ -108,11 +116,16 @@ class VGG_ATT(nn.Module):
     def _compatibility_fn(self, l, g, level):
         if self.mode == 'dp':
             att = l * g.unsqueeze(2).unsqueeze(3)
+
             att = att.sum(1).unsqueeze(1)
 
+
             size = att.size()
+
             att = att.view(att.size(0), att.size(1), -1)
+
             att = F.softmax(att, dim=2)
+
             att = att.view(size)
         elif self.mode == 'pc':
             att = l + g.unsqueeze(2).unsqueeze(3)
@@ -124,18 +137,20 @@ class VGG_ATT(nn.Module):
             elif level == 3:
                 u = self.u3
             att = u(att)
-            
+
             size = att.size()
             att = att.view(att.size(0), att.size(1), -1)
             att = F.softmax(att, dim=2)
             att = att.view(size)
 
         return att
-    
+
     def _weighted_combine(self, l, att_map):
         g = l * att_map
+        g = g.view(g.size(0), g.size(1), -1)
 
-        return g.view(g.size(0), g.size(1), -1).sum(2)
+        weights = g.sum(2)
+        return weights
 
 
 # net = VGG_ATT()
