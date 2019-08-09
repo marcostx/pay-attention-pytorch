@@ -60,42 +60,44 @@ class VGG_ATT(nn.Module):
 
         self.conv_out = nn.Sequential(*list(self.features)[42:50])
 
-        self.fc1 = nn.Linear(512, 512)
+        self.fc1 = nn.Linear(25088, 512)
 
         self.fc1_l1 = nn.Linear(512, 256)
         self.fc1_l2 = nn.Linear(512, 512)
         self.fc1_l3 = nn.Linear(512, 512)
 
-        self.fc2 = nn.Linear(256 + 512 + 512, 10)
+        self.fc2 = nn.Linear(256 + 512 + 512, 2)
 
     def forward(self, train_data):
-        for x in train_data:
-            print(x.size())
-            l1 = self.l1(x)
-        exit(1)
-        l1 = self.l1(x)
-        l2 = self.l2(l1)
-        l3 = self.l3(l2)
+        x_data = train_data[0]
+        # for each video
+        for i,x_t in enumerate(x_data):
+            print(i)
+            x_resized = x_data[i].view(1,x_data[i].size(0),x_data[i].size(1),x_data[i].size(2))
+            l1 = self.l1(x_resized)
+            l2 = self.l2(l1)
+            l3 = self.l3(l2)
 
-        conv_out = self.conv_out(l3)
+            conv_out = self.conv_out(l3)
 
-        fc1 = self.fc1(conv_out.view(conv_out.size(0), -1))
-        fc1_l1 = self.fc1_l1(fc1)
-        fc1_l2 = self.fc1_l2(fc1)
-        fc1_l3 = self.fc1_l3(fc1)
+            fc1 = self.fc1(conv_out.view(conv_out.size(0), -1))
+            fc1_l1 = self.fc1_l1(fc1)
+            
+            fc1_l2 = self.fc1_l2(fc1)
+            fc1_l3 = self.fc1_l3(fc1)
 
-        att1 = self._compatibility_fn(l1, fc1_l1, level=1)
-        att2 = self._compatibility_fn(l2, fc1_l2, level=2)
-        att3 = self._compatibility_fn(l3, fc1_l3, level=3)
+            att1 = self._compatibility_fn(l1, fc1_l1, level=1)
+            att2 = self._compatibility_fn(l2, fc1_l2, level=2)
+            att3 = self._compatibility_fn(l3, fc1_l3, level=3)
 
 
-        g1 = self._weighted_combine(l1, att1)
-        g2 = self._weighted_combine(l2, att2)
-        g3 = self._weighted_combine(l3, att3)
+            g1 = self._weighted_combine(l1, att1)
+            g2 = self._weighted_combine(l2, att2)
+            g3 = self._weighted_combine(l3, att3)
 
-        g = torch.cat((g1, g2, g3), dim=1)
+            g = torch.cat((g1, g2, g3), dim=1)
 
-        out = self.fc2(g)
+            out = self.fc2(g)
 
         return out
 
@@ -152,7 +154,3 @@ class VGG_ATT(nn.Module):
         weights = g.sum(2)
         return weights
 
-
-# net = VGG_ATT()
-# x = torch.randn(2,3,32,32)
-# print(net(Variable(x)).size())
