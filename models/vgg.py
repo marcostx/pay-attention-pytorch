@@ -70,34 +70,38 @@ class VGG_ATT(nn.Module):
 
     def forward(self, train_data):
         outputs = []
-        x_data = train_data
+        batch_data = train_data
         # for each video
-        for i,x_t in enumerate(x_data):
-            x_resized = x_data[i].view(1,x_data[i].size(0),x_data[i].size(1),x_data[i].size(2))
-            l1 = self.l1(x_resized)
-            l2 = self.l2(l1)
-            l3 = self.l3(l2)
+        for idx,item in enumerate(batch_data):
+            x_data = batch_data[idx]
+            for i,x_t in enumerate(x_data):
+                x_resized = x_data[i].view(1,x_data[i].size(0),x_data[i].size(1),x_data[i].size(2))
+                l1 = self.l1(x_resized)
+                l2 = self.l2(l1)
+                l3 = self.l3(l2)
 
-            conv_out = self.conv_out(l3)
+                conv_out = self.conv_out(l3)
 
-            fc1 = self.fc1(conv_out.view(conv_out.size(0), -1))
-            fc1_l1 = self.fc1_l1(fc1)
+                fc1 = self.fc1(conv_out.view(conv_out.size(0), -1))
+                fc1_l1 = self.fc1_l1(fc1)
 
-            fc1_l2 = self.fc1_l2(fc1)
-            fc1_l3 = self.fc1_l3(fc1)
+                fc1_l2 = self.fc1_l2(fc1)
+                fc1_l3 = self.fc1_l3(fc1)
 
-            att1 = self._compatibility_fn(l1, fc1_l1, level=1)
-            att2 = self._compatibility_fn(l2, fc1_l2, level=2)
-            att3 = self._compatibility_fn(l3, fc1_l3, level=3)
+                att1 = self._compatibility_fn(l1, fc1_l1, level=1)
+                att2 = self._compatibility_fn(l2, fc1_l2, level=2)
+                att3 = self._compatibility_fn(l3, fc1_l3, level=3)
 
-            g1 = self._weighted_combine(l1, att1)
-            g2 = self._weighted_combine(l2, att2)
-            g3 = self._weighted_combine(l3, att3)
+                g1 = self._weighted_combine(l1, att1)
+                g2 = self._weighted_combine(l2, att2)
+                g3 = self._weighted_combine(l3, att3)
 
-            g = torch.cat((g1, g2, g3), dim=1)
+                g = torch.cat((g1, g2, g3), dim=1)
 
-            out = self.fc2(g)
+                out = self.fc2(g)
+            out = out.view(2)
             outputs.append(out)
+
         outs = torch.stack(outputs, 0)
 
         return outs

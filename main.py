@@ -44,11 +44,10 @@ def make_split(data_dir):
         else:
             Labels.append(0)
         Dataset.append(d)
-    
-    train_path, test_path, train_y, test_y =  train_test_split(Dataset,Labels, test_size=0.20, random_state=42) 
+
+    train_path, test_path, train_y, test_y =  train_test_split(Dataset,Labels, test_size=0.20, random_state=42)
     # NumFrames = [len(glob.glob1(Dataset[i], "*.jpg")) for i in range(len(Dataset))]
 
-    
     # return Dataset, Labels, NumFrames
     return train_path, train_y, test_path, test_y
 
@@ -69,9 +68,9 @@ print('==> Preparing data..')
 #     transforms.ToTensor(),
 #     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
 # ])
-data_path = args.data_path
+data_path = args.datapath
 seqLen=args.seqLen
-testBatchSize=1
+testBatchSize=10
 
 trainX, trainY, testX, testY = make_split(data_path)
 mean=[0.485, 0.456, 0.406]
@@ -86,13 +85,14 @@ vidSeqTrain = makeDataset(trainX, trainY, spatial_transform=spatial_transform,
 trainLoader = torch.utils.data.DataLoader(vidSeqTrain, batch_size=args.trainBatchSize,
                             shuffle=True, num_workers=0, pin_memory=False, drop_last=True)
 
-test_spatial_transform = Compose([Scale(256), CenterCrop(224), FlippedImagesTest(mean=mean, std=std)])
+test_spatial_transform = Compose([Scale(256), MultiScaleCornerCrop([1, 0.875, 0.75, 0.65625], 224),
+                             ToTensor(), normalize])
 
 vidSeqTest = makeDataset(testX, testY, seqLen=seqLen,
     spatial_transform=test_spatial_transform)
 
 testLoader = torch.utils.data.DataLoader(vidSeqTest, batch_size=testBatchSize,
-                        shuffle=False, num_workers=1)
+                        shuffle=True, num_workers=0, pin_memory=False, drop_last=True)
 
 # trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
 # trainLoader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
@@ -167,19 +167,19 @@ def test(epoch):
     test_loss = 0
     correct = 0
     total = 0
-    for batch_idx, (inputs, targets) in enumerate(testloader):
+    for batch_idx, (inputs, targets) in enumerate(testLoader):
         if use_cuda:
             inputs, targets = inputs.cuda(), targets.cuda()
         inputs, targets = Variable(inputs, volatile=True), Variable(targets)
         outputs = net(inputs)
         loss = criterion(outputs, targets)
 
-        test_loss += loss.data[0]
+        test_loss += loss.data
         _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
         correct += predicted.eq(targets.data).cpu().sum()
 
-        progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+        progress_bar(batch_idx, len(testLoader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
             % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
     # Save checkpoint.
@@ -199,4 +199,4 @@ def test(epoch):
 
 for epoch in range(start_epoch, start_epoch+200):
     train(epoch)
-    test(epoch)
+    # test(epoch)

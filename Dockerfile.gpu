@@ -132,6 +132,7 @@ RUN pip --no-cache-dir install \
 RUN sudo pip install keras==1.2.2
 RUN sudo pip uninstall keras -y
 RUN sudo pip install keras==1.2.2
+RUN sudo pip install -U torch
 
 # Install Torch
 RUN git clone https://github.com/torch/distro.git /root/torch --recursive && \
@@ -163,6 +164,7 @@ RUN sudo pip install opencv-python
 # Install npy4th
 RUN git clone https://github.com/htwaijry/npy4th.git
 RUN cd npy4th && luarocks make
+RUN sudo pip install torchvision
 
 WORKDIR "/root"
 CMD ["/bin/bash"]

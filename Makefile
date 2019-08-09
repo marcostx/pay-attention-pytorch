@@ -93,7 +93,7 @@ FRAMES_FOLDER=dataset/
 DATASET_FOLDER=data/raw_frames/violentflow
 OUTPUT_FRAMES_VAL_FILES=valid/
 MEDIAEVAL_MAIN_FILE=main.lua
-BATCH_SIZE=2
+BATCH_SIZE=10
 
 ##############################################################################
 ############################ CODE COMMANDS ###################################
