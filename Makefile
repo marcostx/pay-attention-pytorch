@@ -21,7 +21,7 @@ PROCESS_DATASET=""
 #Path to src folder
 HOST_CPU_SOURCE_PATH=$(shell pwd)
 HOST_GPU_SOURCE_PATH=$(shell pwd)
-HOST_GPU_DATASET_PATH=/datasets/sandra/media-eval-2015-violence/videos/
+HOST_GPU_DATASET_PATH=/home/marcostx/master-degree/pay-attention-pytorch/data/
 HOST_CPU_DATASET_PATH=/Users/marcostexeira/mediaeval2015_subset/
 
 ##############################################################################
@@ -73,7 +73,7 @@ endif
 ##############################################################################
 
 #COMMANDS
-PYTHON_COMMAND=python
+PYTHON_COMMAND=python3
 TORCH_COMMAND=th
 EXPORT_COMMAND=export
 BASH_COMMAND=bash
@@ -82,7 +82,7 @@ WGET_COMMAND=wget
 MV_COMMAND=mv
 MKDIR_COMMAND=mkdir
 
-TRAIN=train.py
+TRAIN=main.py
 CONFIG_FILE=config/config.json
 SCRIPT_LUA=util/create_t7.lua
 
@@ -90,10 +90,10 @@ CREATE_H5_FILE=$(PREPROCESSING_FOLDER)/create_h5_files.py
 PARSER_FILE=extract_features_mediaeval.py
 MOTION_VECTORS=motion_violence.py
 FRAMES_FOLDER=dataset/
-DATASET_TRAIN_FOLDER=datasets/train/
-DATASET_TEST_FOLDER=datasets/test/
+DATASET_FOLDER=data/raw_frames/violentflow
 OUTPUT_FRAMES_VAL_FILES=valid/
 MEDIAEVAL_MAIN_FILE=main.lua
+BATCH_SIZE=2
 
 ##############################################################################
 ############################ CODE COMMANDS ###################################
@@ -101,8 +101,7 @@ MEDIAEVAL_MAIN_FILE=main.lua
 
 train t: excuda-devise
 	@echo "[Train] Trainning..."
-	@echo "test"
-	@$(PYTHON_COMMAND) $(TRAIN) -c $(CONFIG_FILE)
+	@$(PYTHON_COMMAND) $(TRAIN) --datapath $(DATASET_FOLDER) --trainBatchSize $(BATCH_SIZE)
 
 train-mediaeval tm: excuda-devise
 	@echo "[Train] Training Mediaeval..."
@@ -143,7 +142,7 @@ dataset-test ss:
 ########################### DOCKER COMMANDS ##################################
 ##############################################################################
 run-train rt: docker-print
-	@$(DOCKER_RUN_COMMAND) bash -c "make train CUDA_VISIBLE_DEVICES=$(CUDA_VISIBLE_DEVICES) CONFIG_FILE=$(CONFIG_FILE)";
+	@$(DOCKER_RUN_COMMAND) bash -c "make train CUDA_VISIBLE_DEVICES=$(CUDA_VISIBLE_DEVICES)";
 
 run md: docker-print
 	@$(DOCKER_RUN_COMMAND) bash -c "make train-mediaeval CUDA_VISIBLE_DEVICES=$(CUDA_VISIBLE_DEVICES)";

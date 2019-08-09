@@ -28,7 +28,7 @@ parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--seqLen', type=int, default=30, help='Length of sequence')
 parser.add_argument('--trainBatchSize', type=int, default=1, help='Training batch size')
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
-parser.add_argument('--data_path', type=str, default='./data/raw_frames/violentflow', help='Directory containing data sequences')
+parser.add_argument('--datapath', type=str, default='./data/raw_frames/violentflow', help='Directory containing data sequences')
 
 args = parser.parse_args()
 
