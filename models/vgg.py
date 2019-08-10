@@ -70,7 +70,9 @@ class VGG_ATT(nn.Module):
 
     def forward(self, train_data):
         outputs = []
+        # out=[]
         batch_data = train_data
+        out = []
         # for each video
         for idx,item in enumerate(batch_data):
             x_data = batch_data[idx]
@@ -98,13 +100,50 @@ class VGG_ATT(nn.Module):
 
                 g = torch.cat((g1, g2, g3), dim=1)
 
-                out = self.fc2(g)
-            out = out.view(2)
-            outputs.append(out)
+                out.append(self.fc2(g).view(2).data)
 
-        outs = torch.stack(outputs, 0)
+            out = torch.stack(out,0)
+            out = torch.mean(out,0)
+            # out = out.view(2)
+            # outputs.append(out)
 
-        return outs
+        # outs = out.view(1,2)
+        outs = torch.randn(1,2,requires_grad=True)
+        outs.data = out.view(1,2)
+
+        return outs.cuda()
+    # def forward(self, train_data):
+    #     x_data = train_data[0]
+    #     # for each video
+    #     for i,x_t in enumerate(x_data):
+    #         print(i)
+    #         x_resized = x_data[i].view(1,x_data[i].size(0),x_data[i].size(1),x_data[i].size(2))
+    #         l1 = self.l1(x_resized)
+    #         l2 = self.l2(l1)
+    #         l3 = self.l3(l2)
+    #
+    #         conv_out = self.conv_out(l3)
+    #
+    #         fc1 = self.fc1(conv_out.view(conv_out.size(0), -1))
+    #         fc1_l1 = self.fc1_l1(fc1)
+    #
+    #         fc1_l2 = self.fc1_l2(fc1)
+    #         fc1_l3 = self.fc1_l3(fc1)
+    #
+    #         att1 = self._compatibility_fn(l1, fc1_l1, level=1)
+    #         att2 = self._compatibility_fn(l2, fc1_l2, level=2)
+    #         att3 = self._compatibility_fn(l3, fc1_l3, level=3)
+    #
+    #
+    #         g1 = self._weighted_combine(l1, att1)
+    #         g2 = self._weighted_combine(l2, att2)
+    #         g3 = self._weighted_combine(l3, att3)
+    #
+    #         g = torch.cat((g1, g2, g3), dim=1)
+    #
+    #         out = self.fc2(g)
+    #
+    #     return out
 
     def _make_layers(self, cfg):
         layers = []
