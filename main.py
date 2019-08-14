@@ -18,6 +18,7 @@ import os
 import argparse
 
 from models import *
+from models.resnet_cbam import *
 from utils import progress_bar
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import StepLR
@@ -124,7 +125,8 @@ else:
     # net = DPN92()
     # net = ShuffleNetG2()
     # net = SENet18()
-    net = VGG_ATT(mode='dp')
+    # net = VGG_ATT(mode='dp')
+    net = ResidualNet('violentflows', 18, 2, 'CBAM')
 
 if use_cuda:
     net.cuda()
@@ -167,7 +169,7 @@ def test(epoch):
     test_loss = 0
     correct = 0
     total = 0
-    for batch_idx, (inputs, targets) in enumerate(testloader):
+    for batch_idx, (inputs, targets) in enumerate(testLoader):
         if use_cuda:
             inputs, targets = inputs.cuda(), targets.cuda()
         inputs, targets = Variable(inputs, volatile=True), Variable(targets)
@@ -199,4 +201,4 @@ def test(epoch):
 
 for epoch in range(start_epoch, start_epoch+200):
     train(epoch)
-    test(epoch)
+    # test(epoch)
