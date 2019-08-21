@@ -96,11 +96,12 @@ class Bottleneck(nn.Module):
         return out
 
 class ResNet(nn.Module):
-    def __init__(self, block, layers,  network_type, num_classes, att_type=None):
+    def __init__(self, block, layers,  network_type, num_classes, att_type,batch_size):
         self.inplanes = 64
         super(ResNet, self).__init__()
         self.network_type = network_type
-        # different model config between ImageNet and CIFAR 
+        self.batch_size = batch_size
+        # different model config between ImageNet and CIFAR
         if network_type == "ImageNet":
             self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
             self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -155,12 +156,12 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x):
-        for idx,item in enumerate(x):
-            x_data = x[idx]
-            for i,x_t in enumerate(x_data):
-                print(i)
+    def forward(self, data):
+        batch_x=[]
+        for idx,item in enumerate(data):
+            x_data = data[idx]
 
+            for i,x_t in enumerate(x_data):
                 x_resized = x_data[i].view(1,x_data[i].size(0),x_data[i].size(1),x_data[i].size(2))
                 x = self.conv1(x_resized)
                 x = self.bn1(x)
@@ -188,28 +189,30 @@ class ResNet(nn.Module):
                     x = F.avg_pool2d(x, 4)
 
                 x = x.view(-1)
-                
-                x = self.fc(x[:512])
 
-        outs = torch.randn(1,2,requires_grad=True)
-        outs.data = x.view(1,2)
+                x = self.fc(x[:2048])
+            batch_x.append(x)
+        batch_x = torch.stack(batch_x,0)
+
+        outs = torch.randn(self.batch_size,2,requires_grad=True)
+        outs.data = batch_x.view(self.batch_size,2)
         return  outs
 
-def ResidualNet(network_type, depth, num_classes, att_type):
+def ResidualNet(network_type, depth, num_classes, att_type, batch_size):
 
     # assert network_type in ["ImageNet", "CIFAR10", "CIFAR100"], "network type should be ImageNet or CIFAR10 / CIFAR100"
     assert depth in [18, 34, 50, 101], 'network depth should be 18, 34, 50 or 101'
 
     if depth == 18:
-        model = ResNet(BasicBlock, [2, 2, 2, 2], network_type, num_classes, att_type)
+        model = ResNet(BasicBlock, [2, 2, 2, 2], network_type, num_classes, att_type,batch_size)
 
     elif depth == 34:
-        model = ResNet(BasicBlock, [3, 4, 6, 3], network_type, num_classes, att_type)
+        model = ResNet(BasicBlock, [3, 4, 6, 3], network_type, num_classes, att_type,batch_size)
 
     elif depth == 50:
-        model = ResNet(Bottleneck, [3, 4, 6, 3], network_type, num_classes, att_type)
+        model = ResNet(Bottleneck, [3, 4, 6, 3], network_type, num_classes, att_type,batch_size)
 
     elif depth == 101:
-        model = ResNet(Bottleneck, [3, 4, 23, 3], network_type, num_classes, att_type)
+        model = ResNet(Bottleneck, [3, 4, 23, 3], network_type, num_classes, att_type,batch_size)
 
     return model

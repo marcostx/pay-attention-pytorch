@@ -1,0 +1,12 @@
+Learn to pay attention approach (PyTorch)
+violentflows
+1 split , media dos 30 frames do video, batch_size=2
+epocas: 200
+accuracy : 52.000% 
+
+
+CBAM (PyTorch)
+violentflows
+1 split , media dos 30 frames do video, batch_size=2
+epocas: 200
+accuracy : 58.000% 

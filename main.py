@@ -126,7 +126,7 @@ else:
     # net = ShuffleNetG2()
     # net = SENet18()
     # net = VGG_ATT(mode='dp')
-    net = ResidualNet('violentflows', 18, 2, 'CBAM')
+    net = ResidualNet('violentflows', 18, 2, 'CBAM',args.trainBatchSize)
 
 if use_cuda:
     net.cuda()
